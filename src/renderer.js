@@ -42,6 +42,16 @@ courseIdFileInput.addEventListener('change', () => {
   }
 });
 
+const { ipcRenderer } = require('electron');
+
+ipcRenderer.on('update-message', (event, message) => {
+  console.log('Update message:', message);
+  const updateDiv = document.getElementById('updateMessage');
+  if (updateDiv) {
+    updateDiv.textContent = message;
+  }
+});
+
 // Глобальные данные
 window.fullExportData = []; // для "Курсы и потоки"
 window.filterOptions = { startDate: null, endDate: null, courseTypes: [], courseIds: [] };
@@ -921,12 +931,4 @@ function processCourseIdFilterFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
-const { ipcRenderer } = require('electron');
 
-ipcRenderer.on('update-message', (event, message) => {
-  console.log('Update message:', message);
-  const updateDiv = document.getElementById('updateMessage');
-  if (updateDiv) {
-    updateDiv.textContent = message;
-  }
-});
