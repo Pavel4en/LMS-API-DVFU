@@ -13,6 +13,7 @@
   "build": {
     "appId": "com.example.myapp",
     "productName": "lms-api-dvfu",
+    "artifactName": "lms-api-dvfu.Setup.${version}.exe",
     "publish": {
       "provider": "github",
       "owner": "Pavel4en", 
