@@ -1,6 +1,6 @@
 {
   "name": "lms-api-dvfu",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Electron app with Webpack bundler",
   "main": "main.js",
   "scripts": {

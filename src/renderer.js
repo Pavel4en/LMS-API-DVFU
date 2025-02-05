@@ -52,6 +52,16 @@ ipcRenderer.on('update-message', (event, message) => {
   }
 });
 
+ipcRenderer.on('update-progress', (event, percent) => {
+  console.log('Update progress:', percent, '%');
+  const updateDiv = document.getElementById('updateMessage');
+  if (updateDiv) {
+    updateDiv.textContent = `Скачивание обновления: ${percent}%`;
+  }
+});
+
+
+
 // Глобальные данные
 window.fullExportData = []; // для "Курсы и потоки"
 window.filterOptions = { startDate: null, endDate: null, courseTypes: [], courseIds: [] };
