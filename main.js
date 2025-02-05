@@ -1,5 +1,5 @@
 // main.js
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const log = require('electron-log');
 const { autoUpdater } = require('electron-updater');
@@ -18,10 +18,7 @@ function createWindow() {
     }
   });
   mainWindow.loadFile('index.html');
-  mainWindow.on('closed', () => mainWindow = null);
-
-  // Запуск проверки обновлений при создании окна
-  autoUpdater.checkForUpdatesAndNotify();
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(() => {
@@ -31,60 +28,66 @@ app.whenReady().then(() => {
   autoUpdater.logger = log;
   autoUpdater.logger.transports.file.level = 'info';
 
-  // Обработка событий автообновления
-  autoUpdater.on('checking-for-update', () => {
-    log.info('Проверка обновлений...');
-    if (mainWindow) {
-      mainWindow.webContents.send('update-message', 'Проверка обновлений...');
-    }
-  });
+  // Проверяем обновления вручную
+  autoUpdater.checkForUpdates();
 
+  // Если обновление доступно, уведомляем пользователя
   autoUpdater.on('update-available', (info) => {
-    log.info('Обновление доступно.', info);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-message', 'Обновление доступно. Загрузка...');
-    }
+    log.info('Обновление доступно: ', info);
+    // Можно вывести сообщение через диалог
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Обновление доступно',
+      message: 'Доступно новое обновление. Загрузка началась...',
+      buttons: ['OK']
+    });
+    // Сообщение можно отправить в renderer, если требуется:
+    mainWindow.webContents.send('update-message', 'Обновление доступно. Загрузка...');
   });
 
+  // При отсутствии обновлений
   autoUpdater.on('update-not-available', (info) => {
-    log.info('Обновлений нет.', info);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-message', 'Обновлений нет.');
-    }
+    log.info('Обновлений нет: ', info);
+    mainWindow.webContents.send('update-message', 'Обновлений нет.');
   });
 
+  // Обработка ошибок
   autoUpdater.on('error', (err) => {
     log.error('Ошибка автообновления: ', err);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-message', 'Ошибка автообновления.');
-    }
+    mainWindow.webContents.send('update-message', 'Ошибка автообновления.');
   });
 
+  // Следим за прогрессом загрузки
   autoUpdater.on('download-progress', (progressObj) => {
-    let logMessage = `Скачивание: ${Math.round(progressObj.percent)}%`;
-    log.info(logMessage);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-message', logMessage);
-    }
+    let percent = Math.round(progressObj.percent);
+    log.info(`Скачивание: ${percent}%`);
+    mainWindow.webContents.send('update-message', `Скачивание: ${percent}%`);
   });
 
+  // Когда обновление загружено, предложим пользователю установить его
   autoUpdater.on('update-downloaded', (info) => {
-    log.info('Обновление загружено.', info);
-    if (mainWindow) {
-      mainWindow.webContents.send('update-message', 'Обновление загружено. Приложение будет перезапущено для установки обновления.');
-    }
-    // Автоматически перезапустить приложение через 5 секунд
-    setTimeout(() => {
+    log.info('Обновление загружено: ', info);
+    mainWindow.webContents.send('update-message', 'Обновление загружено. Готово к установке.');
+    const response = dialog.showMessageBoxSync(mainWindow, {
+      type: 'question',
+      buttons: ['Установить сейчас', 'Позже'],
+      defaultId: 0,
+      title: 'Обновление загружено',
+      message: 'Обновление загружено. Хотите установить его сейчас?'
+    });
+    if (response === 0) {
       autoUpdater.quitAndInstall();
-    }, 5000);
+    }
   });
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
-// Обработчик для выбора пути сохранения файла Excel
+// Обработчик для выбора пути сохранения файла Excel (остальной ваш код оставляем)
 ipcMain.handle('save-file-dialog', async (event, defaultPath) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Сохранить Excel файл',
@@ -100,4 +103,14 @@ ipcMain.handle('save-file-dialog', async (event, defaultPath) => {
 // Обработчик логов
 ipcMain.on('log-message', (event, message) => {
   log.info(message);
+});
+
+// Если хотите отправлять сообщения об обновлении в renderer, добавьте следующий код в renderer.js:
+const { ipcRenderer } = require('electron');
+ipcRenderer.on('update-message', (event, message) => {
+  console.log('Update message:', message);
+  const updateDiv = document.getElementById('updateMessage');
+  if (updateDiv) {
+    updateDiv.textContent = message;
+  }
 });
