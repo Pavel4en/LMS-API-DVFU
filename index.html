@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Приложение LMS</title>
+  <style>
+    /* Основные стили страницы */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    /* Навигационная панель */
+    nav {
+      background-color: #3498db;
+      padding: 10px 20px;
+    }
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+    nav ul li {
+      margin-right: 20px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    nav ul li.active {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    /* Стили для кнопок */
+    button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #2980b9;
+    }
+    /* Стили для логов и прогресса */
+    .log, .progress {
+      border: 1px solid #ccc;
+      background-color: #fff;
+      padding: 10px;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+    .log {
+      height: 150px;
+      overflow-y: scroll;
+    }
+    .progress {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    /* Стили для таблицы с фиксированной шапкой */
+    .table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+    thead th {
+      position: sticky;
+      top: 0;
+      background-color: #3498db;
+      color: white;
+      z-index: 1;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    /* Стили для модального окна фильтров (если требуется) */
+    #filterModal {
+      display: none; 
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    #filterModalContent {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+    }
+    #filterModalContent label {
+      display: block;
+      margin-top: 10px;
+    }
+    #filterModalContent input[type="date"] {
+      width: 100%;
+      padding: 5px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    #courseTypesContainer {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 5px;
+      margin-top: 5px;
+    }
+    #filterModalContent .modal-buttons {
+      margin-top: 15px;
+      text-align: right;
+    }
+    /* Стили для контента */
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
+    /* Стили для раздела "Обратная связь" */
+    #contentFeedback h2 {
+      text-align: center;
+      color: #3498db;
+      margin-bottom: 5px;
+    }
+    #contentFeedback p.instruction {
+      text-align: center;
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+    /* Стили для кнопки выбора файла */
+    .custom-file-label {
+      display: inline-block;
+      background-color: #2980b9;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #courseIdFileInput {
+      display: none;
+    }
+    .custom-file-label-file {
+      display: inline-block;
+      background-color: #2980b9;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    #feedbackFileInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li id="tabCourses" class="active">Курсы и потоки</li>
+      <li id="tabMaterials">Разделы и материалы</li>
+      <li id="tabFeedback">Обратная связь</li>
+    </ul>
+  </nav>
+  <div class="container">
+    <!-- Секция "Курсы и потоки" -->
+    <div id="contentCourses" class="content-section active">
+      <div>
+        <button id="fullExportBtn">Выгрузить курсы и потоки</button>
+        <button id="exportFullBtn" disabled>Экспорт курсов и потоков в Excel</button>
+        <button id="filterBtn">Фильтры</button>
+      </div>
+      <div id="progress" class="progress"></div>
+      <h3>Логи:</h3>
+      <div id="log" class="log"></div>
+      <h2>Курсы и потоки</h2>
+      <div class="table-container">
+        <table id="fullExportTable">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Course ID</th>
+              <th>Course Name</th>
+              <th>Session ID</th>
+              <th>Session Name</th>
+              <th>User ID</th>
+              <th>Full Name</th>
+              <th>Listeners Count</th>
+              <th>Owner Name</th>
+              <th>Authors Names</th>
+              <th>Created At</th>
+              <th>Категория</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Данные добавляются динамически -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="updateMessage" style="padding: 10px; color: #2980b9; text-align: center;"></div>
+
+    <!-- Секция "Разделы и материалы" -->
+    <div id="contentMaterials" class="content-section">
+      <div>
+        <button id="fullExportMaterialsBtn">Выгрузить разделы и материалы</button>
+        <button id="exportMaterialsBtn" disabled>Экспорт разделов и материалов в Excel</button>
+        <button id="filterMaterialsBtn">Фильтры</button>
+      </div>
+      <div id="progressMaterials" class="progress"></div>
+      <h3>Логи:</h3>
+      <div id="logMaterials" class="log"></div>
+      <h2>Детали разделов и материалов</h2>
+      <div class="table-container">
+        <table id="materialsDetailsTable">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Course ID</th>
+              <th>Course Name</th>
+              <th>Course Created At</th>
+              <th>Section Name</th>
+              <th>Material Name</th>
+              <th>File Name</th>
+              <th>Category</th>
+              <th>Material Created At</th>
+              <th>SCORM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Детали материалов -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Секция "Обратная связь" -->
+    <div id="contentFeedback" class="content-section">
+      <h2>Генерация ссылок обратной связи</h2>
+      <p class="instruction">
+        Excel‑файл должен содержать столбцыa <strong>"Название курса в ЛМС"</strong> и <strong>course_id</strong>.
+      </p>
+      <!-- Объединяем выбор файла и кнопки в один ряд -->
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap: wrap;">
+          <label for="feedbackFileInput" class="custom-file-label">Выбрать файл</label>
+          <input type="file" id="feedbackFileInput" accept=".xlsx, .xls">
+          <button id="processFeedbackBtn">Добавить ОС</button>
+          <button id="exportFeedbackBtn" disabled>Выгрузить результат</button>
+        </div>
+      </div>
+      <div id="progressFeedback" class="progress"></div>
+      <h3>Логи:</h3>
+      <div id="logFeedback" class="log"></div>
+      <p style="text-align:center; font-size:14px; color:#555;">
+        Пример ссылки: <code>https://forms.yandex.ru/cloud/6743cc36c417f388901ebaf6/?answer_long_text_64154736=Название курса</code>
+      </p>
+    </div>
+
+    <!-- Модальное окно для фильтров -->
+    <div id="filterModal">
+      <div id="filterModalContent">
+        <h3>Фильтры</h3>
+        <!-- Новый блок для загрузки файла с course_id -->
+        <label for="courseIdFileInput" class="custom-file-label-file">Выбрать файл с course_id</label>
+        <input type="file" id="courseIdFileInput" accept=".xlsx, .xls">    
+        <p style="font-size:12px; color:#555;">Файл должен содержать столбец <strong>course_id</strong>.</p>
+        <label for="startDate">Дата от:</label>
+        <input type="date" id="startDate">
+        <label for="endDate">Дата до:</label>
+        <input type="date" id="endDate">
+        <label>Типы:</label>
+        <div id="courseTypesContainer"></div>
+        <div class="modal-buttons">
+          <button id="applyFiltersBtn">Применить</button>
+          <button id="cancelFiltersBtn">Отмена</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Подключаем собранный файл renderer.bundle.js -->
+    <script src="./dist/renderer.bundle.js"></script>
+    <script>
+      // Навигация между разделами
+      const tabCourses = document.getElementById('tabCourses');
+      const tabMaterials = document.getElementById('tabMaterials');
+      const tabFeedback = document.getElementById('tabFeedback');
+      const contentCourses = document.getElementById('contentCourses');
+      const contentMaterials = document.getElementById('contentMaterials');
+      const contentFeedback = document.getElementById('contentFeedback');
+
+      tabCourses.addEventListener('click', () => {
+        tabCourses.classList.add('active');
+        tabMaterials.classList.remove('active');
+        tabFeedback.classList.remove('active');
+        contentCourses.classList.add('active');
+        contentMaterials.classList.remove('active');
+        contentFeedback.classList.remove('active');
+      });
+
+      tabMaterials.addEventListener('click', () => {
+        tabMaterials.classList.add('active');
+        tabCourses.classList.remove('active');
+        tabFeedback.classList.remove('active');
+        contentMaterials.classList.add('active');
+        contentCourses.classList.remove('active');
+        contentFeedback.classList.remove('active');
+      });
+
+      tabFeedback.addEventListener('click', () => {
+        tabFeedback.classList.add('active');
+        tabCourses.classList.remove('active');
+        tabMaterials.classList.remove('active');
+        contentFeedback.classList.add('active');
+        contentCourses.classList.remove('active');
+        contentMaterials.classList.remove('active');
+      });
+    </script>
+  </div>
+</body>
+</html>

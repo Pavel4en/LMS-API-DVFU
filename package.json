@@ -1,0 +1,56 @@
+{
+  "name": "lms-api-dvfu",
+  "version": "1.0.0",
+  "description": "Electron app with Webpack bundler",
+  "main": "main.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "start": "npm run build && electron .",
+    "dev": "webpack --watch & electron .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder"
+  },
+  "build": {
+    "appId": "com.example.myapp",
+    "productName": "lms-api-dvfu",
+    "publish": {
+      "provider": "github",
+      "owner": "Pavel4en", 
+      "repo": "LMS-API-DVFU"
+    },
+    "files": [
+      "main.js",
+      "dist/**",
+      "index.html",
+      "package.json",
+      "src/preload.js"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "babel-loader": "^9.1.0",
+    "electron": "^25.0.0",
+    "electron-builder": "^23.6.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "electron-log": "^4.4.6",
+    "electron-updater": "^6.3.9",
+    "xlsx": "^0.18.5"
+  }
+}
