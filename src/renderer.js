@@ -42,26 +42,6 @@ courseIdFileInput.addEventListener('change', () => {
   }
 });
 
-const { ipcRenderer } = require('electron');
-
-ipcRenderer.on('update-message', (event, message) => {
-  console.log('Update message:', message);
-  const updateDiv = document.getElementById('updateMessage');
-  if (updateDiv) {
-    updateDiv.textContent = message;
-  }
-});
-
-ipcRenderer.on('update-progress', (event, percent) => {
-  console.log('Update progress:', percent, '%');
-  const updateDiv = document.getElementById('updateMessage');
-  if (updateDiv) {
-    updateDiv.textContent = `Скачивание обновления: ${percent}%`;
-  }
-});
-
-
-
 // Глобальные данные
 window.fullExportData = []; // для "Курсы и потоки"
 window.filterOptions = { startDate: null, endDate: null, courseTypes: [], courseIds: [] };
@@ -390,6 +370,7 @@ function addFullExportRow(data, rowNumber) {
 
 async function exportToExcel(data, defaultFileName) {
   addLog("Начало экспорта в Excel");
+  console.log('Перед вызовом saveFileDialog, defaultFileName:', defaultFileName);
   const exportData = data.map(item => ({ ...item }));
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
@@ -703,8 +684,12 @@ async function fullExportMaterials() {
 }
 
 /* ======================= ФУНКЦИОНАЛ "ОБРАТНАЯ СВЯЗЬ" ======================= */
-function createPrefilledUrl(baseUrl, courseName) {
-  const params = { answer_long_text_64154736: courseName };
+// Изменённая функция для генерации URL с предзаполненными полями
+function createPrefilledUrl(baseUrl, courseName, courseId) {
+  const params = { 
+    answer_long_text_64154736: courseName,       // название курса
+    answer_long_text_70163274: courseId            // айди курса
+  };
   const encodedParams = Object.keys(params)
     .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
     .join('&');
@@ -724,7 +709,8 @@ function processFeedbackFile(file) {
     addLogFeedback(`Файл прочитан. Найдено строк: ${jsonData.length}`);
     jsonData.forEach(row => {
       const courseName = row["Название курса в ЛМС"] || "";
-      row["Ссылка"] = createPrefilledUrl(FORM_URL, courseName);
+      const courseId = row["course_id"] || "";
+      row["Ссылка"] = createPrefilledUrl(FORM_URL, courseName, courseId);
     });
     window.feedbackData = jsonData;
     addLogFeedback('Ссылки сгенерированы.');
@@ -941,4 +927,12 @@ function processCourseIdFilterFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
+const { ipcRenderer } = require('electron');
 
+ipcRenderer.on('update-message', (event, message) => {
+  console.log('Update message:', message);
+  const updateDiv = document.getElementById('updateMessage');
+  if (updateDiv) {
+    updateDiv.textContent = message;
+  }
+});

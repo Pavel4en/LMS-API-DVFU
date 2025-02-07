@@ -1,6 +1,6 @@
 {
   "name": "lms-api-dvfu",
-  "version": "1.0.8",
+  "version": "1.0.7",
   "description": "Electron app with Webpack bundler",
   "main": "main.js",
   "scripts": {
@@ -13,7 +13,6 @@
   "build": {
     "appId": "com.example.myapp",
     "productName": "lms-api-dvfu",
-    "artifactName": "lms-api-dvfu.Setup.${version}.exe",
     "publish": {
       "provider": "github",
       "owner": "Pavel4en", 
